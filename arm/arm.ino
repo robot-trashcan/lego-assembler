@@ -15,6 +15,11 @@
 SoftwareSerial mySerial(rxPin, txPin);
 LobotServoController myse(mySerial);
 
+void move(int s, int p) {
+  myse.moveServo(s, p, 1500);
+  delay(1500);
+}
+
 void reset_position() {
   myse.moveServos(6,2000,1,1500,2,1500,3,1500,4,1500,5,1500,6,1500);
   delay(2000);
@@ -26,20 +31,10 @@ void reset_position_noclaw() {
 }
 
 void crane_position() {
-  myse.moveServos(3, 2000, 3, 2450, 4, 1080, 5, 1100);
+  myse.moveServos(4, 2000, 3, 2430, 4, 1080, 5, 1025, 6, 1400);
   delay(2000);
 }
 
-void test() {
-  myse.moveServos(2, 1500, 5, 1500, 6, 1500);
-  delay(1500);
-  crane_position();
-  myse.moveServos(2, 1000, 2, 1800, 6, 1720);
-  delay(1000);
-  myse.moveServo(4, 850, 1000);
-  delay(1000);
-  myse.moveServo(1, 1500, 1000);
-}
 void twist(int x) {
   myse.moveServos(2, 1000, 2, 1500+x, 6, 1500+x);
   delay(1000);
@@ -47,6 +42,11 @@ void twist(int x) {
 
 void close_claw() {
   myse.moveServos(1, 1000, 1, 2500);
+  delay(1000);
+}
+
+void open_claw() {
+  myse.moveServos(1, 1000, 1, 1500);
   delay(1000);
 }
 
@@ -70,11 +70,17 @@ void setup() {
   // reset_position_noclaw();
 
   reset_position();
-  delay(3000);
+  delay(2000);
   crane_position();
-  twist(-200);
   close_claw();
-  test(); 
+  move(5, 1300);
+  myse.moveServos(2, 3000, 4, 500, 3, 2400);
+  delay(4000);
+  move(4, 500);
+  move(3, 2200);
+  open_claw();
+  delay(1000);
+  // reset_position();
 }
 
 void loop() {

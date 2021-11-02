@@ -27,25 +27,6 @@ void reset_position() {
   delay(2000);
 }
 
-void reset_position_noclaw() {
-  myse.moveServos(5,2000,2,1500,3,1500,4,1500,5,1500,6,1500);
-  delay(2000);
-}
-
-void crane_position() {
-  myse.moveServos(3, 2000, 3, 2500, 4, 900, 5, 1300);
-  delay(2000);
-}
-void test(int x) {
-  myse.moveServos(2, 1000, 2, 1500+x, 6, 1500+x);
-  delay(1000);
-}
-
-void close_claw() {
-  myse.moveServos(1, 1000, 1, 2400);
-  delay(1000);
-}
-
 void setup() {
   pinMode(13,OUTPUT);
   mySerial.begin(9600);  // opens software serial port, sets data rate to 9600 bps
@@ -55,16 +36,47 @@ void setup() {
 }
 
 void loop() {
+  char c;
   while(!Serial.available());
-  toMove = Serial.parseInt();
-  pos = Serial.parseInt();
-  myse.moveServo(toMove, pos, 1000);
-  positions[toMove-1] = pos;
-  for(int i = 0; i < 6; i++) {
-    Serial.print(i+1);
-    Serial.print(": ");
-    Serial.print(positions[i]);
-    Serial.print(", ");
+  toMove = 1;
+  Serial.readBytes(&c, 1);
+  switch(c) {
+    case '1':
+      toMove = 1;
+      break;
+    case '2':
+      toMove = 2;
+      break;
+    case '3':
+      toMove = 3;
+      break;
+    case '4':
+      toMove = 4;
+      break;
+    case '5':
+      toMove = 5;
+      break;
+    case '6':
+      toMove = 6;
+      break;
+    case '+':
+      positions[toMove-1] += 10;
+      myse.moveServo(toMove, positions[toMove-1], 1000);
+      delay(1000);
+      break;
+    case '-':
+      positions[toMove-1] -= 10;
+      myse.moveServo(toMove, positions[toMove-1], 1000);
+      delay(1000);
+      break;
+    case 's':
+      for(int i = 0; i < 6; i++) {
+        Serial.print(i+1);
+        Serial.print(": ");
+        Serial.print(positions[i]);
+        Serial.print(", ");
+      }
+      Serial.print("\n");
+      break;
   }
-  Serial.print("\n");
 }
