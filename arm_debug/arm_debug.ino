@@ -44,7 +44,7 @@ void setup() {
 
 void move_to(int servo, int pos_difference) {
   positions[servo-1] += pos_difference;
-  int del = (pos_difference == 10) ? 50 : 500;
+  int del = (abs(pos_difference) == 10) ? 50 : 500;
   myse.moveServo(servo, positions[servo-1], del);
   delay(del);
 }
@@ -53,6 +53,7 @@ void loop() {
   char c;
   while(!Serial.available());
   Serial.readBytes(&c, 1);
+  //Serial.print(c);
   switch(c) {
     case '1':
       toMove = 1;
@@ -73,6 +74,7 @@ void loop() {
       toMove = 6;
       break;
     case '+':
+    case '=':
       move_to(toMove, 10);
       break;
     case '-':
