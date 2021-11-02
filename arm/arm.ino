@@ -35,6 +35,11 @@ void crane_position() {
   delay(2000);
 }
 
+void crane_position2() {
+  myse.moveServos(4, 1500, 3, 2350, 4, 700, 5, 1250, 6, 1400);
+  delay(2000);
+}
+
 void twist(int x) {
   myse.moveServos(2, 1000, 2, 1500+x, 6, 1500+x);
   delay(1000);
@@ -73,14 +78,26 @@ void setup() {
   delay(2000);
   crane_position();
   close_claw();
-  move(5, 1300);
-  myse.moveServos(2, 3000, 4, 500, 3, 2400);
-  delay(4000);
-  move(4, 500);
-  move(3, 2200);
+  move(5, 1200);
+  crane_position2();
+  // myse.moveServos(2, 2000, 4, 500, 3, 2400);
+  delay(2000);
+  // move(4, 500);
+  // move(3, 2200);
   open_claw();
+  move(5, 1400);
+  close_claw();
+  // move(3, 2330);
+  move(5, 1100);
+
+  // do it again
+  move(5, 1400);
+  move(3, 2330);
+  move(5, 1100);
+  
   delay(1000);
-  // reset_position();
+  move(5, 1400);
+  reset_position();
 }
 
 void loop() {

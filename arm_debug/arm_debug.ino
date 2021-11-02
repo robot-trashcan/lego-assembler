@@ -44,8 +44,9 @@ void setup() {
 
 void move_to(int servo, int pos_difference) {
   positions[servo-1] += pos_difference;
-  myse.moveServo(servo, positions[servo-1], abs(pos_difference)*10);
-  delay(pos_difference*10);
+  int del = (pos_difference == 10) ? 50 : 500;
+  myse.moveServo(servo, positions[servo-1], del);
+  delay(del);
 }
 
 void loop() {
@@ -83,17 +84,15 @@ void loop() {
     case '[':
       move_to(toMove, -100);
       break;
-    case '\n':
-      for(int i = 0; i < 6; i++) {
-        Serial.print(i+1);
-        Serial.print(": ");
-        Serial.print(positions[i]);
-        Serial.print(", ");
-     }
-     Serial.print("\n");
-     break;
     default:
       break;
   }
-
+  Serial.print("\r");
+  for(int i = 0; i < 6; i++) {
+    Serial.print(i+1);
+    Serial.print(": ");
+    Serial.print(positions[i]);
+    Serial.print(", ");
+  }
+  Serial.print("           ");
 }
