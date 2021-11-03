@@ -43,6 +43,8 @@ void setup() {
 }
 
 void move_to(int servo, int pos_difference) {
+  if(servo == 1 && positions[0] == 1500 && pos_difference < 0)
+    return;
   positions[servo-1] += pos_difference;
   int del = (abs(pos_difference) == 10) ? 50 : 500;
   myse.moveServo(servo, positions[servo-1], del);
