@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Constants
+# Constants (inches)
 joint_distances = [3 + 13/16, 4 + 1/16, 3 + 13/32, 6]
 
 # Helper functions
