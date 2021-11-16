@@ -211,7 +211,7 @@ class Converter:
 
         # Option 2: z > platform_height
         elif direction == 1:
-            spots = (phis >= 2*np.pi - psi) & (phis <= np.pi - psi)
+            spots = (phis >= 2*np.pi - psi) | (phis <= np.pi - psi)
 
         # Option 3: z < platform_height
         else:
@@ -274,7 +274,14 @@ class Converter:
         s3 = s4 + arm_model.polar_to_vec(self.joint_distances[2], theta_corrected)
 
         out_thetas[2] = get_polar_offset_angle(s2, s3) - out_thetas[1]
-        out_thetas[3] = get_polar_offset_angle(s3, s4) - out_thetas[1] - out_thetas[2]
+        out_thetas[3] = get_polar_offset_angle(s4, s3) - out_thetas[1] - out_thetas[2]
+
+        # Validate some of the angles
+        s4_val = s3 + arm_model.polar_to_vec(self.joint_distances[2], out_thetas[1] + out_thetas[2] + out_thetas[3])
+        if np.sum(s4_val - s4) > self.epsilon:
+            out_thetas[3] += np.pi
+            # print(s4, s4_val)
+            # print('Last angle is wrong')
 
         actual_points = np.array([s0, s1, s2, s3, s4])
 
@@ -282,9 +289,59 @@ class Converter:
 
 
 if __name__ == '__main__':
-    conv = Converter(arm_model.joint_distances, num_theta=100)
-    thetas, actual_points, theta, phi = conv(np.array([0, 10, 0]))
+    conv = Converter(arm_model.joint_distances, num_theta=1000, precision=4)
+    mode = 'active'
 
-    arm_model.plot_arm(arm_model.construct_angles(*thetas[1:]))
-    # plt.plot(actual_points[:, 0], actual_points[:, 1], 'o-')
-    plt.show()
+    # Active configuration
+    if mode == 'active':
+        while True:
+            coords = input('Enter x, y, z separated by space: ')
+
+            # Read input
+            try:
+                point = np.array([float(i) for i in coords.split(' ')])
+            except ValueError:
+                print('Please ensure you have proper formatting!')
+                continue
+
+            # Generate output
+            try:
+                thetas, actual_points, theta, phi = conv(point)
+            except ValueError as e:
+                print(e)
+                # print('No valid point found for this configuration.')
+                continue
+
+            # Plot result
+            arm_model.plot_arm(arm_model.construct_angles(*thetas[1:]))
+            # plt.plot(actual_points[:, 0], actual_points[:, 1], 'o-')
+            plt.show()
+
+    elif mode == 'testing':
+        N = 10
+        X = np.linspace(1, 13, N*10)
+        Z = np.linspace(1, 13, N)
+        out = np.zeros((N, N))
+
+        for i in range(N):
+            for j in range(N):
+                in_pt = np.array([X[i], 0, Z[i]])
+
+                try:
+                    conv(in_pt)
+                except ValueError as e:
+                    if 'valid' in str(e):
+                        out[i, j] = 1
+                    else:
+                        out[i, j] = -1
+
+        plt.imshow(out)
+        plt.colorbar()
+        plt.show()
+
+    elif mode == 'static':
+        point = np.array([5, 7, 0])
+        thetas, actual_points, theta, phi = conv(point)
+
+        arm_model.plot_arm(arm_model.construct_angles(*thetas[1:]))
+        plt.show()
