@@ -5,7 +5,7 @@ This file contains all of the functionality required to convert a rectangular
 
 # Libraries
 from __future__ import annotations
-from simulation import *
+from arm.simulation import arm_model
 import numpy as np
 
 # Helper functions
