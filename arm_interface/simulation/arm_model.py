@@ -1,6 +1,5 @@
 # Import numpy as np
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Constants (inches)
 joint_distances = [3 + 13/16, 4 + 1/16, 3 + 13/32, 6]
@@ -22,6 +21,8 @@ def plot_arm(polars):
     plt.plot(actual_points[:, 0], actual_points[:, 1], 'o-')
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
     for i in [4, 6, 8]:
         for j in [4, 6, 8]:
             for k in [4, 6, 8]:

@@ -5,9 +5,8 @@ This file contains all of the functionality required to convert a rectangular
 
 # Libraries
 from __future__ import annotations
-import arm_model
+from simulation import *
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Helper functions
 def hypotinuse(x: float, y: float) -> float:
@@ -289,6 +288,9 @@ class Converter:
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
+
     conv = Converter(arm_model.joint_distances, num_theta=1000, precision=4)
     mode = 'active'
 
