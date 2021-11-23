@@ -15,14 +15,13 @@ def construct_angles(*thetas):
     return polars
 
 def plot_arm(polars):
+    import matplotlib.pyplot as plt
     polars = np.vstack((np.zeros((1, 2)), polars))
     actual_points = np.array([np.sum(polars[:i+1], axis=0) for i in range(polars.shape[0])])
 
     plt.plot(actual_points[:, 0], actual_points[:, 1], 'o-')
 
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-
     for i in [4, 6, 8]:
         for j in [4, 6, 8]:
             for k in [4, 6, 8]:

@@ -5,8 +5,9 @@ This file contains all of the functionality required to convert a rectangular
 
 # Libraries
 from __future__ import annotations
-from simulation import *
+import arm_model
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Helper functions
 def hypotinuse(x: float, y: float) -> float:
@@ -62,6 +63,18 @@ def simplify_angles(angles: np.ndarray) -> np.ndarray:
     return angles_reduced
 
 
+def half_normalize(angles: np.ndarray) -> np.ndarray:
+    """
+    This function converts angles in the range [0, 2pi]
+    to angles in the range [-pi, pi]
+    """
+
+    unit_angles = simplify_angles(angles)
+    unit_angles[unit_angles > np.pi] -= 2*np.pi
+
+    return unit_angles
+
+
 def get_polar_offset_angle(s1: np.ndarray, s2: np.ndarray) -> float:
     """
     This function gets the angle between two vectors in a somewhat
@@ -108,11 +121,15 @@ class Converter:
     def __init__(self,
                  joint_distances: [float],
                  precision: int = 4,
-                 num_theta: int = 1000,
+                 min_num_theta: int = 1000,
+                 max_num_theta: int = 10000,
+                 theta_step_size: int = 10,
                  num_iters: int = 100):
         # Log inputs
         self.platform_height, *self.joint_distances = joint_distances
-        self.num_theta = num_theta
+        self.min_num_theta = min_num_theta
+        self.max_num_theta = max_num_theta
+        self.theta_step_size = theta_step_size
         self.num_iters = num_iters
 
         # Derive some useful information from the distances
@@ -143,9 +160,9 @@ class Converter:
 
         return R1, R2, R3
 
-    def freudenstein(self, R1: float, R2: float, R3: float) -> (np.ndarray, np.ndarray, np.ndarray):
+    def freudenstein(self, num_theta: int, R1: float, R2: float, R3: float) -> (np.ndarray, np.ndarray, np.ndarray):
         # Initialize theta and phi
-        thetas = np.linspace(0, 2*np.pi, self.num_theta)
+        thetas = np.linspace(0, 2*np.pi, num_theta)
         phis = np.zeros_like(thetas)
         errs = np.zeros_like(thetas)
         phi_0 = 41.4 * np.pi / 180
@@ -154,7 +171,7 @@ class Converter:
         f = lambda x, y: R1*np.cos(x) - R2*np.cos(y) + R3 - np.cos(x - y)
         g = lambda x, y: R2*np.sin(y) - np.sin(x - y)
 
-        for i in range(self.num_theta):
+        for i in range(num_theta):
             for j in range(self.num_iters):
                 # Compute f and its derivative
                 f0 = f(thetas[i], phi_0)
@@ -218,53 +235,16 @@ class Converter:
 
         return thetas[spots], phis[spots]
 
-    def __call__(self, in_pt: np.ndarray) -> np.ndarray:
-        # Step 0: Validate input
-        if not self.validate_point(in_pt):
-            raise ValueError(f'{in_pt} is too far from the origin')
-            return None
-
-        # Step 1: Convert to Cylindrical
-        r, base_theta, z = rectangular_to_cylindrical(in_pt)
-
-        # Step 2: Get 4-bar parameters
-        R1, R2, R3 = self.compute_4bar_params(r, z)
-
-        # Step 3: Get possible θ, Φ values
-        thetas, phis, errs = self.freudenstein(R1, R2, R3)
-
-        # Step 3a: filter down to just the optimal values
-        # thetas = thetas[errs == np.min(errs)]
-        # phis = phis[errs == np.min(errs)]
-        thetas = thetas[errs <= self.epsilon]
-        phis = phis[errs <= self.epsilon]
-
-        # Step 4: reduce phis to correct values
-        phis = simplify_angles(phis)
-        thetas, phis = self.filter_by_phi(r, z, thetas, phis)
-
-        if len(thetas) == 0:  # TODO: change threshold (if necessary)
-            raise ValueError(f'{in_pt} has no valid solutions')
-            return
-
-        # Step 5: Determine the best θ, Φ pair
-        theta_best = self.ideal_theta(r, z)
-        theta_dist = np.abs(thetas - theta_best)
-        best_idx = int(np.where(theta_dist == np.min(theta_dist))[0])
-        theta, phi = thetas[best_idx], phis[best_idx]
-
-        # Step 6: Map θ and φ to joint angles
+    def compute_joint_angles(self, r: float, z: float, theta: float, phi: float) -> np.ndarray:
+        # Initialize array
         out_thetas = np.zeros(4)
 
-        # Step 6a: x/y angle
-        out_thetas[0] = base_theta
-
-        # Step 6b: base angle
+        # Get the base angle
         psi = self.get_psi(r, z)
         psi_signed = psi * np.sign(z - self.platform_height)
         out_thetas[1] = phi + psi_signed
 
-        # Step 6c: Elbows
+        # Get the elbow angles
         s0 = np.zeros(2)
         s1 = np.array([0, self.platform_height])
         s4 = np.array([r, z])
@@ -277,22 +257,125 @@ class Converter:
 
         # Validate some of the angles
         s4_val = s3 + arm_model.polar_to_vec(self.joint_distances[2], out_thetas[1] + out_thetas[2] + out_thetas[3])
-        if np.sum(s4_val - s4) > self.epsilon:
+        if np.linalg.norm(s4_val - s4) > self.epsilon:
             out_thetas[3] += np.pi
-            # print(s4, s4_val)
-            # print('Last angle is wrong')
 
         actual_points = np.array([s0, s1, s2, s3, s4])
 
-        return out_thetas, actual_points, theta, phi
+        return out_thetas, actual_points
+
+    def validate_solution(self, angles: np.ndarray, actual_points: np.ndarray) -> bool:
+        # Derive the points from the angles
+        adjusted_angles = arm_model.construct_angles(*angles[1:])
+        adjusted_angles = np.vstack((np.zeros((1, 2)), adjusted_angles))
+        derived_points = np.array([np.sum(adjusted_angles[:i+1], axis=0) for i in range(adjusted_angles.shape[0])])
+
+        return np.linalg.norm(derived_points - actual_points) < self.epsilon
+
+    def run_simulation(self, in_pt: np.ndarray, num_theta: int) -> np.ndarray:
+        # Step 0: Validate input
+        if not self.validate_point(in_pt):
+            raise ValueError(f'{in_pt} is too far from the origin')
+
+        # Step 1: Convert to Cylindrical
+        r, base_theta, z = rectangular_to_cylindrical(in_pt)
+
+        # Step 2: Get 4-bar parameters
+        R1, R2, R3 = self.compute_4bar_params(r, z)
+
+        # Step 3: Get possible θ, Φ values
+        thetas, phis, errs = self.freudenstein(num_theta, R1, R2, R3)
+
+        # Step 3a: filter down to just the optimal values
+        # thetas = thetas[errs == np.min(errs)]
+        # phis = phis[errs == np.min(errs)]
+        thetas = thetas[errs <= self.epsilon]
+        phis = phis[errs <= self.epsilon]
+
+        # Step 4: reduce phis to correct values
+        phis = simplify_angles(phis)
+        thetas, phis = self.filter_by_phi(r, z, thetas, phis)
+
+        if len(thetas) == 0:  # TODO: change threshold (if necessary)
+            raise ValueError(f'{in_pt} has no solutions within the margin of error')
+
+        # Step 5: Determine the best θ, Φ pair
+        theta_best = self.ideal_theta(r, z)
+        theta_dist = np.abs(thetas - theta_best)
+        thetas_sorted = thetas[np.argsort(theta_dist)]
+        phis_sorted = phis[np.argsort(theta_dist)]
+        # best_idx = int(np.where(theta_dist == np.min(theta_dist))[0])
+        # theta, phi = thetas[best_idx], phis[best_idx]
+
+        for theta, phi in zip(thetas_sorted, phis_sorted):
+            angles, actual_points = self.compute_joint_angles(r, z, theta, phi)
+            angles = half_normalize(angles)
+            condition = (angles[2:] < np.pi/2) & (angles[2:] > -np.pi/2)
+
+            if np.all(condition) and self.validate_solution(angles, actual_points):
+            # if True:
+                angles[0] = base_theta
+
+                # self.validate_solution(angles, actual_points)
+                # assert self.validate_solution(angles, actual_points), f"Chosen solution has mismatch between stated and actual point for {in_pt}"
+                return angles, actual_points, theta, phi
+
+        raise ValueError(f'No solution has all abs(theta) < 90 degrees for {in_pt}')
+        return
+
+    def __call__(self, in_pt: np.ndarray) -> np.ndarray:
+        theta = self.min_num_theta
+
+        while theta <= self.max_num_theta:
+            try:
+                return self.run_simulation(in_pt, theta)
+            except ValueError as e:
+                if 'origin' in str(e):
+                    raise ValueError(str(e))
+
+            theta += self.theta_step_size
+
+        raise ValueError(f'No solution found after trying all thetas for {in_pt}')
+
+
+
+        # # Step 6: Map θ and φ to joint angles
+        # out_thetas = np.zeros(4)
+
+        # # Step 6a: x/y angle
+        # out_thetas[0] = base_theta
+
+        # # Step 6b: base angle
+        # psi = self.get_psi(r, z)
+        # psi_signed = psi * np.sign(z - self.platform_height)
+        # out_thetas[1] = phi + psi_signed
+
+        # # Step 6c: Elbows
+        # s0 = np.zeros(2)
+        # s1 = np.array([0, self.platform_height])
+        # s4 = np.array([r, z])
+        # s2 = s1 + arm_model.polar_to_vec(self.joint_distances[0], out_thetas[1])
+        # theta_corrected = theta + psi_signed
+        # s3 = s4 + arm_model.polar_to_vec(self.joint_distances[2], theta_corrected)
+
+        # out_thetas[2] = get_polar_offset_angle(s2, s3) - out_thetas[1]
+        # out_thetas[3] = get_polar_offset_angle(s4, s3) - out_thetas[1] - out_thetas[2]
+
+        # # Validate some of the angles
+        # s4_val = s3 + arm_model.polar_to_vec(self.joint_distances[2], out_thetas[1] + out_thetas[2] + out_thetas[3])
+        # if np.sum(s4_val - s4) > self.epsilon:
+        #     out_thetas[3] += np.pi
+        #     # print(s4, s4_val)
+        #     # print('Last angle is wrong')
+
+        # actual_points = np.array([s0, s1, s2, s3, s4])
+
+#         return out_thetas, actual_points, theta, phi
 
 
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-
-
-    conv = Converter(arm_model.joint_distances, num_theta=1000, precision=4)
-    mode = 'active'
+    conv = Converter(arm_model.joint_distances, precision=4)
+    mode = 'static'
 
     # Active configuration
     if mode == 'active':
@@ -309,6 +392,7 @@ if __name__ == '__main__':
             # Generate output
             try:
                 thetas, actual_points, theta, phi = conv(point)
+                # thetas = conv(point)
             except ValueError as e:
                 print(e)
                 # print('No valid point found for this configuration.')
@@ -342,8 +426,13 @@ if __name__ == '__main__':
         plt.show()
 
     elif mode == 'static':
-        point = np.array([5, 7, 0])
+        point = np.array([10, 0, 0])
+        # thetas = conv(point)
         thetas, actual_points, theta, phi = conv(point)
 
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.set_aspect('equal')
         arm_model.plot_arm(arm_model.construct_angles(*thetas[1:]))
-        plt.show()
+        plt.plot(actual_points[:, 0], actual_points[:, 1], 'o-')
+        fig.show()
