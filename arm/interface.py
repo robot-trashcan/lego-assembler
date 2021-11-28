@@ -19,9 +19,9 @@ class ArmServo(enum.Enum):
 class ArmController:
     """Class for controlling the arm directly."""
 
-    def __init__(self, joint_distances=arm_data.joint_distances, num_theta=1000, precision=4,
+    def __init__(self, joint_distances=arm_data.joint_distances, precision=4,
                  serial_device="/dev/ttyUSB0"):
-        self.converter = Converter(joint_distances, num_theta=num_theta, precision=precision)
+        self.converter = Converter(joint_distances, precision=precision)
         self.arm_state = {
             ArmServo.BASE_ROTATER : 1500,
             ArmServo.BOTTOM_JOINT : 1500,
