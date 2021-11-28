@@ -4,11 +4,12 @@ print('importing libraries...')
 import sys
 import numpy as np
 import enum
+import serial
 
 import arm.simulation.arm_model as arm_data
 from arm.simulation.rectangular_to_angles import Converter
 
-class ArmServo(enum.Enum):
+class ArmServo(enum.IntEnum):
     BASE_ROTATER = 6
     BOTTOM_JOINT = 5
     MIDDLE_JOINT = 4
@@ -31,6 +32,8 @@ class ArmController:
             ArmServo.CLAW_CLOSER : 1500
         }
         self.serial_device = serial_device
+        self.baud_rate = 115200
+        self.arduino = serial.Serial(port=serial_device, baudrate=self.baud_rate, timeout=0.1)
 
     def calculate_angles(self, coordinates, unit="inches"):
         """Determines the servo angles needed to move the arm to the specfied coordinates.
@@ -64,15 +67,22 @@ class ArmController:
             ArmServo.MIDDLE_JOINT : servo_inputs[2],
             ArmServo.UPPER_JOINT : servo_inputs[3],
         }
+    
+    def move_to(self, position, unit="inches"):
+        """Moves the arm to the given position, sending to arduino and updating
+        internal arm state."""
+        servos = self.calculate_angles(coordinates, unit)
+        for servo in servos:
+            self.arm_state[servo] = servos[servo]
+        self.send_to_arduino()
 
-    def connect_to_arm(self):
-        """Connects to the arm Arduino via serial port."""
-    
-    def move_arm_to(self, arm_state):
-        """Moves the arm to the given state."""
-    
-    def move_arm(self, arm_servo, offset):
-        """Moves the specified arm servo by the given amount."""
+    def send_to_arduino(self):
+        """Sends current arm state to arduino over serial port."""
+        # encode packet... this is kinda messy
+        sorted_vals = sorted([(k,v) for k,v in self.arm_state.items()], key=lambda i: int(i[0]))
+        packet = b'\x00'.join([bytes(str(i[1]), 'ASCII') for i in sorted_vals]) + b'\x00'
+        self.arduino.write(packet)
+        print(self.arduino.readline().decode('ASCII').rstrip())
     
     def close_claw(self):
         """Closes the arm's claw completely."""
