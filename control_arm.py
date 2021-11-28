@@ -4,7 +4,7 @@ import arm.interface
 
 def main():
     interface = arm.interface.ArmController()
-    coordinates = (11, 1, 0)
+    coordinates = (-5, 5, 0)
     print(f"target coordinate (inches): {coordinates}")
     print("attempting to calculate angles... ", end="")
     servos = interface.calculate_angles(coordinates, unit="inches")

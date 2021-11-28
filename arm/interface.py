@@ -54,11 +54,9 @@ class ArmController:
             print("Failed to calculate angles for given coordinate.")
             return None
 
-        # TODO: fix the scaling calculation here
-        
         # rescale to servo inputs
         angles = [d*180/np.pi for d in thetas]
-        servo_inputs = [int(a*2000/180+500) for a in angles]
+        servo_inputs = [int((a+90)/180*2000 + 500) for a in angles]
 
         return {
             ArmServo.BASE_ROTATER : servo_inputs[0],
