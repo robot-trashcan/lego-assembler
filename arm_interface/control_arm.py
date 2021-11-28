@@ -10,11 +10,11 @@ from simulation.rectangular_to_angles import Converter
 
 converter = Converter(arm.joint_distances, num_theta=1000, precision=4)
 
-# coords = input('enter coordinates: ')
-coords = '5 0 0'
+# coords = input('enter coordinates (cm): ')
+coords = '20 0 0'
 
 try:
-    point = np.array([float(i) for i in coords.split(' ')])
+    point = np.array([float(i)/2.54 for i in coords.split(' ')])
 except ValueError:
     print('Please ensure you have proper formatting!')
     sys.exit(1)
@@ -29,9 +29,12 @@ except ValueError:
     sys.exit(2)
 
 print(f'calculated angles (radians): {thetas}')
-for theta in thetas:
-    if theta > np.pi:
+bounded_thetas = list(thetas)
+
 
 angles = [d*180/np.pi for d in thetas]
 print(f'calculated angles (degrees): {angles}')
+
+servos = [int(a*2000/180+500) for a in angles]
+print(f'servo input values: {servos}')
 
