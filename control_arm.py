@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 
 import arm.interface
+import arm.simulation.rectangular_to_angles as to_angles
 
 def main():
-    interface = arm.interface.ArmController()
+    interface = arm.interface.ArmController(serial_comms=True)
+
     while True:
         valid = False
         while not valid:
@@ -22,16 +24,6 @@ def main():
         interface.arm_state[4] = positions[2] # middle joint
         interface.arm_state[3] = positions[3] # upper joint
         interface.send_to_arduino()
-    return
-
-    coordinates = (-5, 5, 0)
-    print(f"target coordinate (inches): {coordinates}")
-    print("attempting to calculate angles... ", end="")
-    servos = interface.calculate_angles(coordinates, unit="inches")
-    if servos is not None:
-        print("success")
-        for s in servos:
-            print(s, servos[s])
 
 if __name__ == "__main__":
     main()

@@ -21,7 +21,7 @@ class ArmController:
     """Class for controlling the arm directly."""
 
     def __init__(self, joint_distances=arm_data.joint_distances, precision=4,
-                 serial_device="/dev/ttyUSB0"):
+                 serial_device="/dev/ttyUSB0",serial_comms=True):
         self.converter = Converter(joint_distances, precision=precision)
         self.arm_state = {
             ArmServo.BASE_ROTATER : 1500,
@@ -33,12 +33,36 @@ class ArmController:
         }
         self.serial_device = serial_device
         self.baud_rate = 115200
-        self.arduino = serial.Serial(port=serial_device, baudrate=self.baud_rate, timeout=0.1)
+        if serial_comms:
+            self.arduino = serial.Serial(port=serial_device, baudrate=self.baud_rate, timeout=0.1)
+
+    def calculate_servos(self, coordinates, unit="inches"):
+        """Determines servo input values needed to move the arm to specified coordinates."""
+        thetas = self.calculate_angles(coordinates, unit)
+        return self.servo_angles(thetas)
+
+    def servo_angles(self, thetas):
+        """Rescales angles from calculate_angles() to servo input values."""
+        # rescale to servo inputs
+        print(thetas)
+        angles = [d*180/np.pi for d in thetas]
+        angles[1] = 90 - angles[1]
+        angles[1] *= -1
+        angles[3] *= -1
+        print(angles)
+        servo_inputs = [int((a+90)/180*2000 + 500) for a in angles]
+
+        return {
+            ArmServo.BASE_ROTATER : servo_inputs[0],
+            ArmServo.BOTTOM_JOINT : servo_inputs[1],
+            ArmServo.MIDDLE_JOINT : servo_inputs[2],
+            ArmServo.UPPER_JOINT : servo_inputs[3],
+        }
 
     def calculate_angles(self, coordinates, unit="inches"):
-        """Determines the servo angles needed to move the arm to the specfied coordinates.
-        Takes a triple of floats, and returns a dict containing the values needed to send 
-        to the arm (in order)."""
+        """Determines the servo angles needed to move the arm to the specfied
+        coordinates, in radians. Takes a triple of floats, and returns a list of
+        floats."""
         # convert units
         if unit == "inches":
             point = np.array(coordinates)
@@ -57,23 +81,14 @@ class ArmController:
             print("Failed to calculate angles for given coordinate.")
             return None
 
-        # rescale to servo inputs
-        angles = [d*180/np.pi for d in thetas]
-        servo_inputs = [int((a+90)/180*2000 + 500) for a in angles]
-
-        return {
-            ArmServo.BASE_ROTATER : servo_inputs[0],
-            ArmServo.BOTTOM_JOINT : servo_inputs[1],
-            ArmServo.MIDDLE_JOINT : servo_inputs[2],
-            ArmServo.UPPER_JOINT : servo_inputs[3],
-        }
+        return thetas
     
     def move_to(self, position, unit="inches"):
         """Moves the arm to the given position, sending to arduino and updating
         internal arm state."""
-        servos = self.calculate_angles(coordinates, unit)
-        for servo in servos:
-            self.arm_state[servo] = servos[servo]
+        servo_positions = self.calculate_angles(position, unit)
+        for servo in servo_positions:
+            self.arm_state[servo] = servo_positions[servo]
         self.send_to_arduino()
 
     def send_to_arduino(self):

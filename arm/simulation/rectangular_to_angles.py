@@ -426,7 +426,7 @@ if __name__ == '__main__':
         plt.show()
 
     elif mode == 'static':
-        point = np.array([10, 0, 0])
+        point = np.array([0, 5, 10])
         # thetas = conv(point)
         thetas, actual_points, theta, phi = conv(point)
 
