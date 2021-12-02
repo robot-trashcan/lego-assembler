@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import enum
 import serial
+import pickle
 
 import arm.simulation.arm_model as arm_data
 from arm.simulation.rectangular_to_angles import Converter
@@ -21,7 +22,7 @@ class ArmController:
     """Class for controlling the arm directly."""
 
     def __init__(self, joint_distances=arm_data.joint_distances, precision=4,
-                 serial_device="/dev/ttyUSB0",serial_comms=True):
+                 serial_device="/dev/ttyUSB0",serial_comms=True,positions_file='positions.pickle'):
         self.converter = Converter(joint_distances, precision=precision)
         self.arm_state = {
             ArmServo.BASE_ROTATER : 1500,
@@ -33,23 +34,27 @@ class ArmController:
         }
         self.serial_device = serial_device
         self.baud_rate = 115200
+        with open(positions_file, 'rb') as pfile:
+            self.precalc_positions = pickle.load(pfile)
         if serial_comms:
             self.arduino = serial.Serial(port=serial_device, baudrate=self.baud_rate, timeout=0.1)
 
     def calculate_servos(self, coordinates, unit="inches"):
         """Determines servo input values needed to move the arm to specified coordinates."""
-        thetas = self.calculate_angles(coordinates, unit)
+        if unit == "legos" and coordinates in self.precalc_positions:
+            return self.precalc_positions[coordinates]
+        thetas,_pts,_tht,_phi = self.calculate_angles(coordinates, unit=unit)
         return self.servo_angles(thetas)
 
     def servo_angles(self, thetas):
         """Rescales angles from calculate_angles() to servo input values."""
         # rescale to servo inputs
-        print(thetas)
+        # print(thetas)
         angles = [d*180/np.pi for d in thetas]
         angles[1] = 90 - angles[1]
         angles[1] *= -1
         angles[3] *= -1
-        print(angles)
+        # print(angles)
         servo_inputs = [int((a+90)/180*2000 + 500) for a in angles]
 
         return {
@@ -63,30 +68,30 @@ class ArmController:
         """Determines the servo angles needed to move the arm to the specfied
         coordinates, in radians. Takes a triple of floats, and returns a list of
         floats."""
-        # convert units
+        # convert units + some magic number calibration
         if unit == "inches":
-            point = np.array(coordinates)
+            point = list(coordinates)
         elif unit == "centimeters":
-            point = np.array(c/2.54 for c in coordinates)
+            point = [c/2.54 for c in coordinates]
         elif unit == "legos":
-            # definitely need to fix this calculation
-            # we assume here that lego studs are 8mm apart, and the origin is aligned
-            # with the arm
-            point = np.array(c*8/25.4 for c in coordinates)
+            point = [c*8/25.4 for c in coordinates]
+            point[1] += 4.0
+        
+        point[1] += 0.5
         
         # calculate angles
         try:
-            thetas, _points, _theta, _phi = self.converter(point)
+            thetas, points, theta, phi = self.converter(np.array(point))
         except ValueError:
             print("Failed to calculate angles for given coordinate.")
             return None
 
-        return thetas
+        return thetas,points,theta,phi
     
     def move_to(self, position, unit="inches"):
         """Moves the arm to the given position, sending to arduino and updating
         internal arm state."""
-        servo_positions = self.calculate_angles(position, unit)
+        servo_positions = self.calculate_servos(position, unit)
         for servo in servo_positions:
             self.arm_state[servo] = servo_positions[servo]
         self.send_to_arduino()

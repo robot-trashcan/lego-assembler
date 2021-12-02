@@ -9,21 +9,16 @@ def main():
     while True:
         valid = False
         while not valid:
-            vals = input('servo values: ')
+            vals = input('lego coordinate: ')
             try:
-                positions = [int(x) for x in vals.split()]
+                coordinates = [int(x) for x in vals.split()]
             except ValueError:
                 continue
             except Exception as e:
                 print(e)
             else:
-                valid = (len(positions) == 4)
-
-        interface.arm_state[6] = positions[0] # base rotater
-        interface.arm_state[5] = positions[1] # bottom joint
-        interface.arm_state[4] = positions[2] # middle joint
-        interface.arm_state[3] = positions[3] # upper joint
-        interface.send_to_arduino()
+                valid = (len(coordinates) == 3)
+        interface.move_to(coordinates, unit="legos")
 
 if __name__ == "__main__":
     main()
