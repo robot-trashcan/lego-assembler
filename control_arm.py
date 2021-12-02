@@ -19,7 +19,7 @@ def main():
                 coordinates = [int(x) for x in args[1:]]
             except ValueError:
                 continue
-            move(interface, coordinates)
+            move(interface, tuple(coordinates))
         elif args[0] == 'close':
             interface.close_claw()
         elif args[0] == 'open':
