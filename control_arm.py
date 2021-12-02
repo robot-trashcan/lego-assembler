@@ -4,7 +4,7 @@ import arm.interface
 import arm.simulation.rectangular_to_angles as to_angles
 
 def main():
-    interface = arm.interface.ArmController(serial_comms=True)
+    interface = arm.interface.ArmController(serial_comms=True, positions_file='arm/positions.pickle')
 
     while True:
         valid = False
@@ -18,7 +18,7 @@ def main():
                 print(e)
             else:
                 valid = (len(coordinates) == 3)
-        interface.move_to(coordinates, unit="legos")
+        interface.move_to(tuple(coordinates), unit="legos")
 
 if __name__ == "__main__":
     main()
