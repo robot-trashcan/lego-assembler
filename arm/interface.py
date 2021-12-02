@@ -106,6 +106,10 @@ class ArmController:
     
     def close_claw(self):
         """Closes the arm's claw completely."""
+        self.arm_state[ArmServo.CLAW_CLOSER] = 2500
+        self.send_to_arduino()
     
     def open_claw(self):
         """Opens the arm's claw completely."""
+        self.arm_state[ArmServo.CLAW_CLOSER] = 1500
+        self.send_to_arduino()
