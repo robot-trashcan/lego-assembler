@@ -9,7 +9,7 @@ def move(interface, coordinates):
     return True
 
 def main():
-    interface = arm.interface.ArmController(serial_comms=True)
+    interface = arm.interface.ArmController(serial_comms=True, positions_file='arm/positions.pickle')
     while True:
         # wait for commands
         cmd = input('(move, close, open) >> ')
