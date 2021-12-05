@@ -80,6 +80,7 @@ class ArmController:
             point = [c*8/25.4 for c in coordinates]
             point[1] += 3.3
         
+        point[0] -= 0.25
         point[1] += 0.75
         
         # calculate angles

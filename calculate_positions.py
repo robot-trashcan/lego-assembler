@@ -19,7 +19,7 @@ for x in x_range:
         for z in z_range:
             coordinates.append((x,y,z))
 cnum = len(x_range)*len(y_range)*len(z_range)
-controller = arm.interface.ArmController(serial_comms=False, positions_file='arm/positions.pickle')
+controller = arm.interface.ArmController(serial_comms=False)
 processes = 8
 
 def calc_pos(pos):
