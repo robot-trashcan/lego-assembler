@@ -11,7 +11,7 @@ PLOT = False
 
 def main():
     
-    controller = ArmController(serial_comms=False)
+    controller = ArmController(serial_comms=False, positions_file='arm/positions.pickle')
     coordinates = (0,0,0) # legos
 
     controller.move_to(coordinates, unit='legos')
