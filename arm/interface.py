@@ -78,9 +78,9 @@ class ArmController:
             point = [c/2.54 for c in coordinates]
         elif unit == "legos":
             point = [c*8/25.4 for c in coordinates]
-            point[1] += 4.0
+            point[1] += 3.3
         
-        point[1] += 0.5
+        point[1] += 0.75
         
         # calculate angles
         try:

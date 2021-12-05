@@ -2,14 +2,18 @@ import pickle
 from multiprocessing import Pool
 import time
 
+from matplotlib.pyplot import savefig
+
 import arm.interface
+
+save_file = 'arm/positions.pickle'
 
 positions = {}
 coordinates = []
 
-x_range = range(-5, 5)
-y_range = range(0, 15)
-z_range = range(0, 3)
+x_range = range(-10, 10)
+y_range = range(0, 20)
+z_range = range(0, 5)
 for x in x_range:
     for y in y_range:
         for z in z_range:
@@ -23,7 +27,7 @@ def calc_pos(pos):
     return controller.calculate_servos(pos, unit='legos')
 
 if __name__ == '__main__':
-    print(f'Calculating positions through {x_range}, {y_range}, {z_range}: {cnum} positions')
+    print(f'Calculating positions through x={x_range}, y={y_range}, z={z_range}: {cnum} positions')
 
     print(f'Pooling with {processes} processes')
 
@@ -35,7 +39,7 @@ if __name__ == '__main__':
     for index,coord in enumerate(coordinates):
         positions[coord] = calculated[index]
 
-    with open('positions.pickle', 'wb') as pfile:
+    with open(save_file, 'wb') as pfile:
         pickle.dump(positions, pfile)
     
     elapsed = time.time() - start
