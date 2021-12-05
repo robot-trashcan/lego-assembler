@@ -29,14 +29,18 @@ def main():
             if len(coordinates) != 3:
                 continue
             interface.open_claw()
-            coordinates[2] += 1
+            coordinates[2] += 2
             interface.move_to(tuple(coordinates), unit="legos")
             interface.send_to_arduino()
             time.sleep(2.5)
             interface.close_claw()
             interface.send_to_arduino()
             time.sleep(2.5)
-            coordinates[2] -= 2
+            coordinates[2] -= 4
+            interface.move_to(tuple(coordinates), unit="legos")
+            interface.send_to_arduino()
+            time.sleep(2.5)
+            coordinates[2] += 6
             interface.move_to(tuple(coordinates), unit="legos")
             interface.send_to_arduino()
         elif args[0] == "manual":
