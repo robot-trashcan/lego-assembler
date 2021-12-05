@@ -90,6 +90,12 @@ class ArmController:
             return None
 
         return thetas,points,theta,phi
+
+    def set_position(self, servo_position_string):
+        """Sets position of arm according to string of servo positions."""
+        pos = [int(s) for s in servo_position_string.split()[1:]]
+        for i,s in enumerate(coordinates):
+            self.arm_state[i] = s
     
     def move_to(self, position, unit="inches"):
         """Moves the arm to the given position, sending to arduino and updating
@@ -105,6 +111,11 @@ class ArmController:
         packet = b'\x00'.join([bytes(str(i[1]), 'ASCII') for i in sorted_vals]) + b'\x00'
         self.arduino.write(packet)
         print(self.arduino.readline().decode('ASCII').rstrip())
+
+    def raise_arm(self):
+        """Raises arm up above board."""
+        self.arm_state[ArmServo.BOTTOM_JOINT] = 2000
+        self.arm_state[ArmServo.MIDDLE_JOINT] = 500
     
     def close_claw(self):
         """Closes the arm's claw completely."""
@@ -113,3 +124,8 @@ class ArmController:
     def open_claw(self):
         """Opens the arm's claw completely."""
         self.arm_state[ArmServo.CLAW_CLOSER] = 1500
+
+    def reset_position(self):
+        """Resets the arm state to the default position."""
+        for s in self.arm_state:
+            self.arm_state[s] = 1500
