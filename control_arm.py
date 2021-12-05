@@ -14,7 +14,7 @@ def main():
         args = cmd.split()
         if args[0] == 'move':
             try:
-                coordinates = [int(x) for x in args[1:]]
+                coordinates = [int(x)+0.5 for x in args[1:]]
             except ValueError:
                 continue
             if len(coordinates) != 3:
@@ -23,7 +23,7 @@ def main():
             interface.send_to_arduino()
         elif args[0] == 'lock':
             try:
-                coordinates = [int(x) for x in args[1:]]
+                coordinates = [int(x)+0.5 for x in args[1:]]
             except ValueError:
                 continue
             if len(coordinates) != 3:
@@ -45,7 +45,7 @@ def main():
             interface.send_to_arduino()
         elif args[0] == "manual":
             try:
-                coordinates = [int(x) for x in args[1:]]
+                coordinates = [int(x)+0.5 for x in args[1:]]
             except ValueError:
                 continue
             for i,s in enumerate(coordinates):
