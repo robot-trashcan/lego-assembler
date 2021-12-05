@@ -11,9 +11,11 @@ save_file = 'arm/positions.pickle'
 positions = {}
 coordinates = []
 
+DONE = 0
+
 x_range = range(-10, 10)
 y_range = range(0, 20)
-z_range = range(0, 5)
+z_range = range(-1, 5)
 for x in x_range:
     for y in y_range:
         for z in z_range:
@@ -23,8 +25,11 @@ controller = arm.interface.ArmController(serial_comms=False)
 processes = 8
 
 def calc_pos(pos):
-    print(f'position: {pos}       \r', end='')
-    return controller.calculate_servos(pos, unit='legos')
+    p = controller.calculate_servos(pos, unit='legos')
+    global DONE
+    DONE += 1
+    print(f'progress: {DONE/cnum*100:.2f}%\r', end='')
+    return p
 
 if __name__ == '__main__':
     print(f'Calculating positions through x={x_range}, y={y_range}, z={z_range}: {cnum} positions')

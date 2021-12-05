@@ -22,6 +22,7 @@ def plot_arm(polars):
     plt.plot(actual_points[:, 0], actual_points[:, 1], 'o-')
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
     for i in [4, 6, 8]:
         for j in [4, 6, 8]:
             for k in [4, 6, 8]:

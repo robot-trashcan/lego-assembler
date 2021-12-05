@@ -95,7 +95,7 @@ class ArmController:
     def set_position(self, servo_position_string):
         """Sets position of arm according to string of servo positions."""
         pos = [int(s) for s in servo_position_string.split()[1:]]
-        for i,s in enumerate(coordinates):
+        for i,s in enumerate(pos):
             self.arm_state[i] = s
     
     def move_to(self, position, unit="inches"):
@@ -130,3 +130,8 @@ class ArmController:
         """Resets the arm state to the default position."""
         for s in self.arm_state:
             self.arm_state[s] = 1500
+    
+    def push_down(self):
+        """Attempts to push down a lego piece by slightly raising then
+        lowering the arm."""
+        pass

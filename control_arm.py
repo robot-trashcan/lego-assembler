@@ -1,13 +1,8 @@
 #!/usr/bin/python3
 
+import time
 import arm.interface
 
-def move(interface, coordinates):
-    if len(coordinates) != 3:
-        return False
-    interface.move_to(coordinates, unit="legos")
-    interface.send_to_arduino()
-    return True
 
 def main():
     interface = arm.interface.ArmController(serial_comms=True, positions_file='arm/positions.pickle')
@@ -22,7 +17,26 @@ def main():
                 coordinates = [int(x) for x in args[1:]]
             except ValueError:
                 continue
-            move(interface, tuple(coordinates))
+            if len(coordinates) != 3:
+                continue
+            interface.move_to(tuple(coordinates), unit="legos")
+            interface.send_to_arduino()
+        elif args[0] == 'lock':
+            try:
+                coordinates = [int(x) for x in args[1:]]
+            except ValueError:
+                continue
+            if len(coordinates) != 3:
+                continue
+            interface.open_claw()
+            coordinates[2] += 1
+            interface.move_to(tuple(coordinates), unit="legos")
+            interface.send_to_arduino()
+            time.sleep(2.5)
+            interface.close_claw()
+            time.sleep(2.5)
+            coordinates[2] -= 2
+
         elif args[0] == "manual":
             try:
                 coordinates = [int(x) for x in args[1:]]
@@ -43,6 +57,7 @@ def main():
         elif args[0] == "raise":
             interface.raise_arm()
             interface.send_to_arduino()
+        
 
 if __name__ == "__main__":
     main()
