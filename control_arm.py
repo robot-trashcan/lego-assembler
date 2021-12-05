@@ -34,9 +34,11 @@ def main():
             interface.send_to_arduino()
             time.sleep(2.5)
             interface.close_claw()
+            interface.send_to_arduino()
             time.sleep(2.5)
             coordinates[2] -= 2
-
+            interface.move_to(tuple(coordinates), unit="legos")
+            interface.send_to_arduino()
         elif args[0] == "manual":
             try:
                 coordinates = [int(x) for x in args[1:]]
