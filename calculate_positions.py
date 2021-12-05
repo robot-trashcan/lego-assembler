@@ -15,7 +15,7 @@ DONE = 0
 
 x_range = range(-10, 10)
 y_range = range(0, 20)
-z_range = range(-1, 5)
+z_range = range(-2, 5)
 for x in x_range:
     for y in y_range:
         for z in z_range:
@@ -26,9 +26,7 @@ processes = 8
 
 def calc_pos(pos):
     p = controller.calculate_servos(pos, unit='legos')
-    global DONE
-    DONE += 1
-    print(f'progress: {DONE/cnum*100:.2f}%\r', end='')
+    print(f'position: {pos}        \r', end='')
     return p
 
 if __name__ == '__main__':
