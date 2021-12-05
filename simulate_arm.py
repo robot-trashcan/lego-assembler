@@ -12,7 +12,7 @@ def main():
     coordinates = (0, 10, 0) # legos
 
     thetas, points, _t, _p = controller.calculate_angles(coordinates, unit='legos')
-    print(controller.servo_angles(thetas))
+    controller.move_to(coordinates, unit='legos')
 
     fig = plt.figure()
     ax = fig.add_subplot(111)

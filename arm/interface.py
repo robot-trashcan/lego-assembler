@@ -22,7 +22,7 @@ class ArmController:
     """Class for controlling the arm directly."""
 
     def __init__(self, joint_distances=arm_data.joint_distances, precision=4,
-                 serial_device="/dev/ttyUSB0",serial_comms=True,positions_file='positions.pickle'):
+                 serial_device="/dev/ttyUSB0",serial_comms=True,positions_file=None):
         self.converter = Converter(joint_distances, precision=precision)
         self.arm_state = {
             ArmServo.BASE_ROTATER : 1500,
@@ -34,8 +34,11 @@ class ArmController:
         }
         self.serial_device = serial_device
         self.baud_rate = 115200
-        with open(positions_file, 'rb') as pfile:
-            self.precalc_positions = pickle.load(pfile)
+        if positions_file:
+            with open(positions_file, 'rb') as pfile:
+                self.precalc_positions = pickle.load(pfile)
+        else:
+            self.precalc_positions = {}
         if serial_comms:
             self.arduino = serial.Serial(port=serial_device, baudrate=self.baud_rate, timeout=0.1)
 
@@ -94,7 +97,6 @@ class ArmController:
         servo_positions = self.calculate_servos(position, unit)
         for servo in servo_positions:
             self.arm_state[servo] = servo_positions[servo]
-        self.send_to_arduino()
 
     def send_to_arduino(self):
         """Sends current arm state to arduino over serial port."""
@@ -107,9 +109,7 @@ class ArmController:
     def close_claw(self):
         """Closes the arm's claw completely."""
         self.arm_state[ArmServo.CLAW_CLOSER] = 2500
-        self.send_to_arduino()
     
     def open_claw(self):
         """Opens the arm's claw completely."""
         self.arm_state[ArmServo.CLAW_CLOSER] = 1500
-        self.send_to_arduino()
