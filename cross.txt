@@ -1,0 +1,67 @@
+# place cross structure
+RESET
+RAISE
+
+# grab lego from base
+OPEN
+MOVE 0 0 1
+CLOSE
+RAISE
+
+# place farthest
+MOVE -1 6 3
+OPEN
+LOCK -1 6 3
+RAISE
+
+# grab lego
+OPEN
+MOVE 0 0 1
+CLOSE
+RAISE
+
+# place middle
+MOVE 1 4 0
+OPEN
+LOCK 1 4 0
+RAISE
+
+# grab lego
+OPEN
+MOVE 0 0 1
+CLOSE
+RAISE
+
+# place right
+TURN 600
+MOVE -1 4 0
+OPEN
+LOCK -1 4 0
+RAISE
+
+# grab lego
+OPEN
+MOVE 0 0 1
+CLOSE
+RAISE
+
+# place left
+TURN 2400
+MOVE 3 4 0
+OPEN
+LOCK 3 4 0
+RAISE
+
+# grab lego
+OPEN
+MOVE 0 0 1
+CLOSE
+RAISE
+
+# place middle
+MOVE 1 2 0
+OPEN
+LOCK 1 2 0
+RAISE
+
+QUIT
