@@ -13,7 +13,7 @@ coordinates = []
 
 DONE = 0
 
-x_range = range(-10, 10)
+x_range = range(-5, 5)
 y_range = range(0, 10)
 z_range = range(-2, 5)
 for x in x_range:
