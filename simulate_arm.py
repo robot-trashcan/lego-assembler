@@ -12,9 +12,10 @@ PLOT = False
 def main():
     
     controller = ArmController(serial_comms=False, positions_file='arm/positions.pickle')
-    coordinates = (0,0,0) # legos
+    coordinates = (-3,5,0) # legos
 
     controller.move_to(coordinates, unit='legos')
+    controller.close_claw()
     # controller.close_claw()
     sorted_vals = sorted([(k,v) for k,v in controller.arm_state.items()], key=lambda i: int(i[0]))
     print(" ".join(str(i[1]) for i in sorted_vals))

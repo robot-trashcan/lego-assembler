@@ -19,7 +19,7 @@ z_range = range(-2, 5)
 for x in x_range:
     for y in y_range:
         for z in z_range:
-            coordinates.append((x+0.5,y+0.5,z+0.5))
+            coordinates.append((x+0.5,y+0.5,z))
 cnum = len(x_range)*len(y_range)*len(z_range)
 controller = arm.interface.ArmController(serial_comms=False)
 processes = 8

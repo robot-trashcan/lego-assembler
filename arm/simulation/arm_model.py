@@ -2,7 +2,7 @@
 import numpy as np
 
 # Constants (inches)
-joint_distances = [3.7, 4.11, 3.48, 7.1]
+joint_distances = [3.7, 4.11, 3.48, 7.0]
 
 # Helper functions
 def polar_to_vec(dist, theta):
