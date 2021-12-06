@@ -46,6 +46,7 @@ class ArmController:
         """Determines servo input values needed to move the arm to specified coordinates."""
         if unit == "legos" and coordinates in self.precalc_positions:
             return self.precalc_positions[coordinates]
+        print('calculating position...')
         thetas,_pts,_tht,_phi = self.calculate_angles(coordinates, unit=unit)
         return self.servo_angles(thetas)
 

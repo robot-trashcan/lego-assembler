@@ -40,6 +40,6 @@ void loop() {
   }
 
   // move servos accordingly
-  myse.moveServos(6, 2000, 1, servo_positions[0], 2, servo_positions[1], 3, servo_positions[2],
+  myse.moveServos(6, 1500, 1, servo_positions[0], 2, servo_positions[1], 3, servo_positions[2],
                            4, servo_positions[3], 5, servo_positions[4], 6, servo_positions[5]);
 }

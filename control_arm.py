@@ -3,12 +3,11 @@
 import time
 import arm.interface
 
-
 def main():
     interface = arm.interface.ArmController(serial_comms=True, positions_file='arm/positions.pickle')
     while True:
         # wait for commands
-        cmd = input('(move, raise, close, open, manual, reset) >> ')
+        cmd = input('(move, raise, close, open, manual, reset, lock, quit, turn_left, turn_right, turn_str) >> ')
         if not cmd:
             continue
         args = cmd.split()
@@ -28,19 +27,37 @@ def main():
                 continue
             if len(coordinates) != 3:
                 continue
+            ypos = coordinates[2]
             interface.open_claw()
-            coordinates[2] += 2
+            coordinates[2] = ypos+3
             interface.move_to(tuple(coordinates), unit="legos")
             interface.send_to_arduino()
             time.sleep(2.5)
             interface.close_claw()
             interface.send_to_arduino()
             time.sleep(2.5)
-            coordinates[2] -= 4
+            coordinates[2] = ypos-2
             interface.move_to(tuple(coordinates), unit="legos")
             interface.send_to_arduino()
             time.sleep(2.5)
-            coordinates[2] += 6
+            coordinates[2] = ypos+3
+            interface.move_to(tuple(coordinates), unit="legos")
+            interface.send_to_arduino()
+            
+            interface.open_claw()
+            coordinates[2] = ypos+3
+            interface.move_to(tuple(coordinates), unit="legos")
+            interface.send_to_arduino()
+            time.sleep(2.5)
+            interface.close_claw()
+            interface.send_to_arduino()
+            time.sleep(2.5)
+            coordinates[2] = ypos-2
+            coordinates[1] -= 1
+            interface.move_to(tuple(coordinates), unit="legos")
+            interface.send_to_arduino()
+            time.sleep(2.5)
+            coordinates[2] = ypos+3
             interface.move_to(tuple(coordinates), unit="legos")
             interface.send_to_arduino()
         elif args[0] == "manual":
@@ -63,6 +80,17 @@ def main():
         elif args[0] == "raise":
             interface.raise_arm()
             interface.send_to_arduino()
+        elif args[0] == "turn_left":
+            interface.arm_state[arm.interface.ArmServo.CLAW_TWISTER] = 500
+            interface.send_to_arduino()
+        elif args[0] == "turn_right":
+            interface.arm_state[arm.interface.ArmServo.CLAW_TWISTER] = 2500
+            interface.send_to_arduino()
+        elif args[0] == "turn":
+            interface.arm_state[arm.interface.ArmServo.CLAW_TWISTER] = int(args[1])
+            interface.send_to_arduino()
+        elif args[0] == "quit":
+            exit()
         
 
 if __name__ == "__main__":
