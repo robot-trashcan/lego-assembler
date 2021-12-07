@@ -13,7 +13,9 @@ def main():
         args = cmd.split()
         if args[0] == 'move':
             try:
-                coordinates = [int(x)+0.5 for x in args[1:]]
+                coordinates = [int(x) for x in args[1:]]
+                coordinates[0] += 0.5
+                coordinates[1] += 0.5
             except ValueError:
                 continue
             if len(coordinates) != 3:
@@ -22,7 +24,9 @@ def main():
             interface.send_to_arduino()
         elif args[0] == 'lock':
             try:
-                coordinates = [int(x)+0.5 for x in args[1:]]
+                coordinates = [int(x) for x in args[1:]]
+                coordinates[0] += 0.5
+                coordinates[1] += 0.5
             except ValueError:
                 continue
             if len(coordinates) != 3:
@@ -43,8 +47,8 @@ def main():
             coordinates[2] = ypos+3
             interface.move_to(tuple(coordinates), unit="legos")
             interface.send_to_arduino()
+            continue
             
-            interface.open_claw()
             coordinates[2] = ypos+3
             interface.move_to(tuple(coordinates), unit="legos")
             interface.send_to_arduino()
