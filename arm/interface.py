@@ -134,7 +134,10 @@ class ArmController:
         for s in self.arm_state:
             self.arm_state[s] = 1500
     
-    def push_down(self):
-        """Attempts to push down a lego piece by slightly raising then
-        lowering the arm."""
-        pass
+    def move_chute(self, side):
+        if side == "left":
+            self.arm_state[ArmServo.BASE_ROTATER] = 2179
+            self.arm_state[ArmServo.BOTTOM_JOINT] = 1154
+            self.arm_state[ArmServo.MIDDLE_JOINT] = 850
+            self.arm_state[ArmServo.UPPER_JOINT] = 2495
+            self.arm_state[ArmServo.CLAW_TWISTER] = 2300
